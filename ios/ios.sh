@@ -35,7 +35,7 @@ export CFLAGS="-isysroot $SDKROOT -I$SDKROOT/usr/include/ -I./include/ -arch $AR
 export CXXFLAGS="${CXXFLAGS} -stdlib=libc++ -isysroot $SDKROOT -I$SDKROOT/usr/include/ -I./include/ -arch $ARCH -miphoneos-version-min=9.0 $ICU_FLAGS ${ADDITION_FLAG}"
 export LDFLAGS="-stdlib=libc++ -L$SDKROOT/usr/lib/ -isysroot $SDKROOT -Wl,-dead_strip -miphoneos-version-min=9.0 -lstdc++ ${ADDITION_FLAG}"
 
-mkdir ${BUILD_DIR}
+mkdir -p ${BUILD_DIR}
 cd ${BUILD_DIR}
 
 

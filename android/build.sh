@@ -37,7 +37,7 @@ if [ "$ENABLE_CCACHE" ]; then
    export CXX="ccache $TARGET_HOST-clang++"
 fi
 
-mkdir ${BUILD_DIR}
+mkdir -p ${BUILD_DIR}
 cd ${BUILD_DIR}
 
 sh $ICU_SOURCE/configure --host=$TARGET_HOST -with-cross-build=${PREBUILD} ${CONFIG_PREFIX} --prefix=$PLATFORM_PREFIX
@@ -48,7 +48,7 @@ make install
 
 cd ..
 
-mkdir lib/$2
+mkdir -p lib/$2
 
 cp ${BUILD_DIR}/lib/* ./lib/$2/
 

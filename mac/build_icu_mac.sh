@@ -139,7 +139,7 @@ export PLATFORM_PREFIX="${PWD}/mac-build"
 
 export CPPFLAGS=${CFLAGS}
 
-mkdir ${PREBUILD}
+mkdir -p ${PREBUILD}
 cd ${PREBUILD}
 
 sh ${ICU_SOURCE}/runConfigureICU MacOSX --prefix=${PLATFORM_PREFIX} ${CONFIG_PREFIX}
