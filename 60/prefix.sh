@@ -1,6 +1,6 @@
 export ICU_VERSION="60-2"
 
-export BASE_ICU_DIR="/Users/perry/Development/icu-cross-compile-master"
+export BASE_ICU_DIR="/Users/perry/Development/icu/60"
 
 export ICU_DIR="${BASE_ICU_DIR}/icu-${ICU_VERSION}"
 
