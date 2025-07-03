@@ -74,7 +74,6 @@ function build() {
 
 #ARCH = aarch64, armv7a, i686, x86_64
 export ARCH=$1
-export HOST=$2
 
 export TARGET="${ARCH}-linux-android"
 if [[ ${ARCH} == "armv7a" ]]; then
@@ -104,7 +103,7 @@ else
 fi
 
 sh ${ICU_SOURCE}/configure --prefix=${ANDROID_INSTALL_DIR} \
-    --host=${HOST} \
+    --host=${ARCH} \
     --with-library-suffix=${ARCH} \
     --with-cross-build=${MAC_PREBUILD} \
     ${CONFIG_PREFIX}
@@ -127,22 +126,22 @@ mkdir -p "lib"
 ####################################################
 # Install standalone toolchain x86
 
-build "x86" "i686-linux-android"
+build "i686"
 
 ####################################################
 # Install standalone toolchain x86_64
 
-build "x86_64" "x86_64-linux-android"
+build "x86_64"
 
 ################################################################
 # Install standalone toolchain arm64
 
-build "aarch64" "aarch64-linux-android"
+build "aarch64"
 
 ################################################################
 # Install standalone toolchain armv7a
 
-build "armv7a" "arm-linux-androideabi"
+build "armv7a"
 
 
 mkdir -p "${ANDROID_INSTALL_DIR}/include/"
