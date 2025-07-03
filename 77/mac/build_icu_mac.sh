@@ -109,15 +109,12 @@ echo "==============================="
 echo "===== Run build for MacOS ====="
 echo "==============================="
 
-#export PLATFORM_PREFIX="${PWD}/${MAC_INSTALL_DIR}"
-export PLATFORM_PREFIX="${MAC_INSTALL_DIR}"
-
 export CPPFLAGS=${CFLAGS}
 
-mkdir -p ${PREBUILD}
-cd ${PREBUILD}
+mkdir -p ${MAC_PREBUILD}
+cd ${MAC_PREBUILD}
 
-sh ${ICU_SOURCE}/runConfigureICU MacOSX --prefix=${PLATFORM_PREFIX} ${CONFIG_PREFIX}
+sh ${ICU_SOURCE}/runConfigureICU MacOSX --prefix=${MAC_INSTALL_DIR} ${CONFIG_PREFIX}
 
 make clean
 make -j4

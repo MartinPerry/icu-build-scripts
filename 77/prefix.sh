@@ -1,6 +1,8 @@
 export ICU_VERSION="77-1"
 
-export IOS_MIN_SDK_VERSION="12.0"
+#==========
+# Base setup
+#==========
 
 #base directory
 export BASE_ICU_DIR="/Users/perry/Development/icu/77"
@@ -8,28 +10,45 @@ export BASE_ICU_DIR="/Users/perry/Development/icu/77"
 #Where buidling data are put
 export BUILD_DIR="${BASE_ICU_DIR}/build"
 
-export ICU_DIR="${BUILD_DIR}/icu-${ICU_VERSION}"
+export ICU_DIR="${BASE_ICU_DIR}/build/icu-${ICU_VERSION}"
 
 export ICU_SOURCE="${ICU_DIR}/source"
 
-export PREBUILD="${BUILD_DIR}/scripts/mac/icu_build"
+#==========
+# Mac
+#==========
 
-export NDK_STANDALONE_TOOLCHAIN_ROOT="${BUILD_DIR}/scripts/android/toolchains"
+export MAC_PREBUILD="${BUILD_DIR}/scripts/mac/icu_build"
 
-export ANDROID_NDK_ROOT="/Users/perry/Library/Android/sdk/android-ndk-r16b"
+export MAC_INSTALL_DIR="${BASE_ICU_DIR}/mac/mac-install"
+
+#==========
+# IOS
+#==========
+
+export IOS_MIN_SDK_VERSION="12.0"
+
+export IOS_INSTALL_DIR="${BASE_ICU_DIR}/ios/ios-install"
+
+#==========
+# Android
+#==========
+
+#31 compileSdkVersion, 21 minSdkVersion
+export ANDROID_API_VERSION=21
+
+export ANDROID_NDK_HOME="/Users/perry/Library/Android/sdk/ndk/28.1.13356709"
 
 #Where final builded data are put
-export MAC_INSTALL_DIR="${BASE_ICU_DIR}/mac/mac-install"
-export IOS_INSTALL_DIR="${BASE_ICU_DIR}/ios/ios-install"
 export ANDROID_INSTALL_DIR="${BASE_ICU_DIR}/android/android-install"
+
+#====================================================================================
+#====================================================================================
+#====================================================================================
 
 #if FILTER variable is not set, all settings are used
 #https://github.com/unicode-org/icu/blob/master/docs/userguide/icu_data/buildtool.md
 export FILTER="${BASE_ICU_DIR}/filters.json"
-
-#====================================================================================
-#====================================================================================
-#====================================================================================
 
 export CONFIG_PREFIX=" --enable-extras=yes \
 --enable-tools=yes \

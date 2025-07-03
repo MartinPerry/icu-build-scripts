@@ -2,50 +2,99 @@
 
 source "../prefix.sh"
 
+#==============================================================================
+initToolchain() {
 
+    local TARGET=$1
 
-function build {
-# $1: Toolchain Name
-# $2: Toolchain architecture
-# $3: Android arch
-# $4: host for configure
-# $5: additional CPP flags
+    export isValid=1
 
-export API_VERSION=26
+    export TOOLCHAIN="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/darwin-x86_64"
 
-echo "preparing ${1} toolchain"
+    export NDK_CLANG="${TOOLCHAIN}/bin/${TARGET}${ANDROID_API_VERSION}-clang++"
+    if [[ ! -f "${NDK_CLANG}" ]]; then
+        echo "Target ${TARGET} not exist for API ${ANDROID_API_VERSION}: ${NDK_CLANG}"
+        isValid=0
+        return
+    fi
 
-if [[ ! -d "${ANDROID_NDK_ROOT}/platforms/android-${API_VERSION}/arch-${3}" ]]; then
-    echo "Architecture ${3} not exist for API ${API_VERSION}"
+    export PATH="${TOOLCHAIN}/bin":${PATH}
+
+    export AR="${TOOLCHAIN}/bin/llvm-ar"
+    export CC="${TOOLCHAIN}/bin/${TARGET}${ANDROID_API_VERSION}-clang"
+    export AS="$CC"
+    export CXX="${TOOLCHAIN}/bin/${TARGET}${ANDROID_API_VERSION}-clang++"
+    export LD="${TOOLCHAIN}/bin/ld"
+    export RANLIB="${TOOLCHAIN}/bin/llvm-ranlib"
+    export STRIP="${TOOLCHAIN}/bin/llvm-strip"
+        
+}
+
+#==============================================================================
+
+initCompilerFlags() {
+  local ARCH=$1
+  
+  local optim="-O2"
+  local cppv="-std=c++17"
+  
+  #local globalCFLAGS="-ffunction-sections -fdata-sections -fno-exceptions -fno-short-wchar -fno-short-enums"
+  local globalCFLAGS="-fno-exceptions -fno-short-wchar -fno-short-enums"
+  
+  #local globalLDFLAGS="-Wl,--gc-sections ${optim} -ffunction-sections -fdata-sections"
+  local globalLDFLAGS="${optim}"
+  
+  case "${ARCH}" in
+  "armv7a")
+    export CFLAGS="-march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=softfp -Wno-unused-function -fstrict-aliasing -fPIC -DANDROID -D__ANDROID_API__=${ANDROID_API_VERSION} ${optim} ${globalCFLAGS}"
+    export LDFLAGS="-march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=softfp -Wl,--fix-cortex-a8 ${globalLDFLAGS}"
+    ;;
+  "aarch64")
+    export CFLAGS="-march=armv8-a -Wno-unused-function -fstrict-aliasing -fPIC -DANDROID -D__ANDROID_API__=${ANDROID_API_VERSION} ${optim} ${globalCFLAGS}"
+    export LDFLAGS="-march=armv8-a ${globalLDFLAGS}"
+    ;;
+  "i686")
+    export CFLAGS="-march=i686 -Wno-unused-function -fstrict-aliasing -fPIC -DANDROID -D__ANDROID_API__=${ANDROID_API_VERSION} ${optim} ${globalCFLAGS}"
+    export LDFLAGS="-march=i686 ${globalLDFLAGS}"
+    ;;
+  "x86_64")
+    export CFLAGS="-march=x86-64 -msse4.2 -mpopcnt -Wno-unused-function -fstrict-aliasing -fPIC -DANDROID -D__ANDROID_API__=${ANDROID_API_VERSION} ${optim} ${globalCFLAGS}"
+    export LDFLAGS="-march=x86-64 ${globalLDFLAGS}"
+    ;;
+  esac
+  
+  export CXXFLAGS="${cppv} ${optim} ${globalCFLAGS}"
+  export CPPFLAGS=${CFLAGS}
+}
+
+#==============================================================================
+
+function build() {
+# $1: Android Arch Name
+
+#ARCH = aarch64, armv7a, i686, x86_64
+export ARCH=$1
+export HOST=$2
+
+export TARGET="${ARCH}-linux-android"
+if [[ ${ARCH} == "armv7a" ]]; then
+    TARGET="${TARGET}eabi"
+fi
+
+echo "Building ${ICU_VERSION} for ${ARCH} / ${TARGET}"
+
+initToolchain "${TARGET}"
+if [[ ${isValid} == 0 ]]; then
     return
 fi
 
-export PLATFORM_PREFIX="${PWD}/$2-toolchain"
-export BUILD_DIR="${PWD}/build-$2"
+initCompilerFlags "${ARCH}"
 
-#https://developer.android.com/ndk/guides/standalone_toolchain.html
-${ANDROID_NDK_ROOT}/build/tools/make_standalone_toolchain.py \
-   --api=${API_VERSION} \
-   --install-dir=${PLATFORM_PREFIX} \
-   --stl=libc++ \
-   --arch=$3
+export ARCH_BUILD_DIR="${BUILD_DIR}/build-${ARCH}"
+export ARCH_INSTALL_DIR="${BUILD_DIR}/install-${ARCH}"
 
-export PATH=${PLATFORM_PREFIX}/bin:${PATH}
-
-export CPPFLAGS="-I${PLATFORM_PREFIX}/include ${CFLAGS} -I${ANDROID_NDK_ROOT}/sources/android/cpufeatures $5"
-export LDFLAGS="-L${PLATFORM_PREFIX}/lib"
-export PKG_CONFIG_PATH=${PLATFORM_PREFIX}/lib/pkgconfig
-export PKG_CONFIG_LIBDIR=${PKG_CONFIG_PATH}
-export TARGET_HOST="$4"
-export CC="${TARGET_HOST}-clang"
-export CXX="${TARGET_HOST}-clang++"
-if [ "${ENABLE_CCACHE}" ]; then
-    export CC="ccache ${TARGET_HOST}-clang"
-    export CXX="ccache ${TARGET_HOST}-clang++"
-fi
-
-mkdir -p ${BUILD_DIR}
-cd ${BUILD_DIR}
+mkdir -p ${ARCH_BUILD_DIR}
+cd ${ARCH_BUILD_DIR}
 
 if [ -z ${FILTER+x} ]; then
     echo "No filters"
@@ -54,10 +103,10 @@ else
     export ICU_DATA_FILTER_FILE="${FILTER}"
 fi
 
-sh ${ICU_SOURCE}/configure \
-    --host=${TARGET_HOST} \
-    -with-cross-build=${PREBUILD} \
-    --prefix=${PLATFORM_PREFIX} \
+sh ${ICU_SOURCE}/configure --prefix=${ANDROID_INSTALL_DIR} \
+    --host=${HOST} \
+    --with-library-suffix=${ARCH} \
+    --with-cross-build=${MAC_PREBUILD} \
     ${CONFIG_PREFIX}
 
 make clean
@@ -66,13 +115,6 @@ make install
 
 cd ..
 
-mkdir -p "${ANDROID_INSTALL_DIR}/lib/$2"
-
-cp ${BUILD_DIR}/lib/* "${ANDROID_INSTALL_DIR}/lib/$2/"
-
-rm -rf ${PLATFORM_PREFIX}
-rm -rf ${BUILD_DIR}
-
 }
 
 
@@ -80,43 +122,27 @@ echo "==============================="
 echo "==== Run build for Android ===="
 echo "==============================="
 
-mkdir "${ANDROID_INSTALL_DIR}/lib"
+mkdir -p "lib"
 
 ####################################################
 # Install standalone toolchain x86
 
-build "x86" "x86" "x86" "i686-linux-android" ""
+build "x86" "i686-linux-android"
 
 ####################################################
 # Install standalone toolchain x86_64
 
-#build "x86_64" "x86_64" "x86_64" "x86_64-linux-android" ""
-
-
-################################################################
-# Install standalone toolchain ARMeabi
-
-build "ARMeabi" "armeabi" "arm" "arm-linux-androideabi" ""
+build "x86_64" "x86_64-linux-android"
 
 ################################################################
-# Install standalone toolchain ARMeabi-v7a
+# Install standalone toolchain arm64
 
-build "ARMeabi-v7a" "armeabi-v7a" "arm" "arm-linux-androideabi" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3"
-
-################################################################
-# Install standalone toolchain ARM64-v8a
-
-#build "ARM64-v8a" "arm64-v8a" "arm64" "aarch64-linux-android" ""
+build "aarch64" "aarch64-linux-android"
 
 ################################################################
-# Install standalone toolchain MIPS
+# Install standalone toolchain armv7a
 
-#build "MIPS" "mips" "mips" "mipsel-linux-android" ""
-
-################################################################
-# Install standalone toolchain MIPS64
-
-#build "MIPS64" "mips64" "mips64" "mips64el-linux-android" ""
+build "armv7a" "arm-linux-androideabi"
 
 
 mkdir -p "${ANDROID_INSTALL_DIR}/include/"
@@ -124,5 +150,5 @@ mkdir -p "${ANDROID_INSTALL_DIR}/include/unicode"
 
 cp ${ICU_SOURCE}/common/unicode/*.h "${ANDROID_INSTALL_DIR}/include/unicode"
 
-
+echo "done"
 

@@ -47,11 +47,10 @@ else
     export ICU_DATA_FILTER_FILE="${FILTER}"
 fi
 
-sh ${ICU_SOURCE}/configure \
+sh ${ICU_SOURCE}/configure --prefix=${ARCH_INSTALL_DIR} \
     --host=${HOST} \
     --with-library-suffix=${ARCH} \
-    --with-cross-build=${PREBUILD} \
-    --prefix=${ARCH_INSTALL_DIR} \
+    --with-cross-build=${MAC_PREBUILD} \
     ${CONFIG_PREFIX}
 
 make clean
